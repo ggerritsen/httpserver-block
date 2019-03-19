@@ -3,18 +3,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 )
 
+// Record is the default data type
 type Record struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Index\n")
+	fmt.Fprintf(w, "Index")
 }
 
 func serveRecords(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +44,6 @@ func readRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Found match: %q\n", m[1])
 	i, err := strconv.ParseInt(m[1], 10, 0)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -55,10 +56,22 @@ func readRecord(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	return
 }
 
 func saveRecord(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	s := r.FormValue("name")
+	if s == "" {
+		http.Error(w, "No name provided", http.StatusBadRequest)
+		return
+	}
+
+	rec := &Record{ID: 1, Name: s}
+	fmt.Printf("Received new Record: %+v\n", rec)
+
+	w.WriteHeader(http.StatusCreated)
 }
